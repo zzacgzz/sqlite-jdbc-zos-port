@@ -94,7 +94,8 @@ test:
 clean: clean-native clean-java clean-tests
 
 
-$(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
+# the patched amalgamation (sqlite3.c, sqlite3ext.h); also packaged by zos-sources
+$(SQLITE_OUT)/sqlite3.c : $(SQLITE_UNPACKED)
 	@mkdir -p $(@D)
 	perl -p -e "s/sqlite3_api;/sqlite3_api = 0;/g" \
 	    $(SQLITE_SOURCE)/sqlite3ext.h > $(SQLITE_OUT)/sqlite3ext.h
@@ -104,10 +105,13 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 # register compile option 'JDBC_EXTENSIONS'
 # limits defined here: https://www.sqlite.org/limits.html
 	perl -p -e "s/^(static const char \* const sqlite3azCompileOpt.+)$$/\1\n\n\/* This has been automatically added by sqlite-jdbc *\/\n  \"JDBC_EXTENSIONS\",/;" \
-	    $(SQLITE_OUT)/sqlite3.c.tmp > $(SQLITE_OUT)/sqlite3.c
+	    $(SQLITE_OUT)/sqlite3.c.tmp > $(SQLITE_OUT)/sqlite3.c.new
 # z/OS: leave $SYSNAME-style symlinks to the kernel (inert unless __MVS__)
-	perl zos/zos-symlink-patch.pl $(SQLITE_OUT)/sqlite3.c
-	cat src/main/ext/*.c >> $(SQLITE_OUT)/sqlite3.c
+	perl zos/zos-symlink-patch.pl $(SQLITE_OUT)/sqlite3.c.new
+	cat src/main/ext/*.c >> $(SQLITE_OUT)/sqlite3.c.new
+	mv $(SQLITE_OUT)/sqlite3.c.new $@
+
+$(SQLITE_OUT)/sqlite3.o : $(SQLITE_OUT)/sqlite3.c
 	$(CC) -o $@ -c $(CCFLAGS) \
 	    -DSQLITE_ENABLE_LOAD_EXTENSION=1 \
 	    -DSQLITE_HAVE_ISNAN \
@@ -163,6 +167,38 @@ $(NATIVE_DLL): $(SQLITE_OUT)/$(LIBNAME)
 	cp $< $@
 	@mkdir -p $(NATIVE_TARGET_DIR)
 	cp $< $(NATIVE_TARGET_DIR)/$(LIBNAME)
+
+# z/OS sources package, prepared on any host and built with xlc on USS by
+# zos/build.sh (see zos/README.md). Uses the plain amalgamation zip, never
+# SQLite's configure. A pre-downloaded zip can be given as target/amal.zip,
+# as $(SQLITE_ARCHIVE), or unpacked via SQLITE_SOURCE=dir.
+ZOS_SQLITE_OUT := $(TARGET)/$(sqlite)-zOS-s390x
+ZOS_BUILD := $(TARGET)/zos-build
+
+.PHONY: zos-sources
+zos-sources:
+	@mkdir -p $(TARGET)
+	@if [ -f $(TARGET)/amal.zip ] && [ ! -f $(SQLITE_ARCHIVE) ]; then cp -v $(TARGET)/amal.zip $(SQLITE_ARCHIVE); fi
+	rm -f $(ZOS_SQLITE_OUT)/sqlite3.c
+	$(MAKE) OS_NAME=zOS OS_ARCH=s390x ENABLE_UPDATE_DELETE_LIMIT=0 $(ZOS_SQLITE_OUT)/sqlite3.c $(TARGET)/common-lib/NativeDB.h
+	rm -rf $(ZOS_BUILD) $(ZOS_BUILD).tar
+	mkdir -p $(ZOS_BUILD)
+	cp $(ZOS_SQLITE_OUT)/sqlite3.c $(ZOS_SQLITE_OUT)/sqlite3ext.h $(SQLITE_HEADER) $(ZOS_BUILD)/
+	cp $(SRC)/org/sqlite/core/NativeDB.c $(TARGET)/common-lib/NativeDB.h zos/build.sh $(ZOS_BUILD)/
+	@c1=`grep -c RegisterExtensionFunctions $(ZOS_BUILD)/sqlite3.c`; \
+	c2=`grep -c '"JDBC_EXTENSIONS"' $(ZOS_BUILD)/sqlite3.c`; \
+	c3=`grep -c ZOS_SYMLINK_PATCH $(ZOS_BUILD)/sqlite3.c`; \
+	c4=`grep -c collationClass $(ZOS_BUILD)/NativeDB.c`; \
+	echo "== checks"; \
+	echo "RegisterExtensionFunctions: $$c1 (want >= 2)"; \
+	echo "JDBC_EXTENSIONS:            $$c2 (want 1)"; \
+	echo "ZOS_SYMLINK_PATCH:          $$c3 (want 1)"; \
+	echo "collationClass:             $$c4 (want 6)"; \
+	if [ "$$c1" -lt 2 ] || [ "$$c2" -ne 1 ] || [ "$$c3" -ne 1 ] || [ "$$c4" -ne 6 ]; then \
+	  echo "zos-sources: a check failed - do not upload" >&2; exit 1; \
+	fi
+	cd $(TARGET) && COPYFILE_DISABLE=1 tar --format=ustar -cf zos-build.tar zos-build
+	@echo "Wrote $(ZOS_BUILD).tar (`wc -c < $(ZOS_BUILD).tar | tr -d " "` bytes). See zos/README.md for the z/OS steps."
 
 win32: $(SQLITE_UNPACKED) jni-header
 	./docker/dockcross-windows-x86 -a $(DOCKER_RUN_OPTS) bash -c 'make clean-native native CROSS_PREFIX=i686-w64-mingw32.static- OS_NAME=Windows OS_ARCH=x86'
