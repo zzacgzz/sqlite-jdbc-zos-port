@@ -1,0 +1,7 @@
+target/
+build/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+sqlite-jdbc-*.jar

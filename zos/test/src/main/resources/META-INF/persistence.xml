@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+
+  <persistence-unit name="sqlitezos" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <class>sqlitezos.jpa.Author</class>
+    <class>sqlitezos.jpa.Book</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+
+    <properties>
+      <property name="jakarta.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
+      <!-- jakarta.persistence.jdbc.url is set at run time by JpaSuite (uses --dir) -->
+      <property name="hibernate.dialect" value="org.hibernate.community.dialect.SQLiteDialect"/>
+      <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
+      <property name="hibernate.show_sql" value="false"/>
+      <property name="hibernate.connection.pool_size" value="4"/>
+    </properties>
+  </persistence-unit>
+</persistence>
