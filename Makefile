@@ -174,6 +174,8 @@ $(NATIVE_DLL): $(SQLITE_OUT)/$(LIBNAME)
 # as $(SQLITE_ARCHIVE), or unpacked via SQLITE_SOURCE=dir.
 ZOS_SQLITE_OUT := $(TARGET)/$(sqlite)-zOS-s390x
 ZOS_BUILD := $(TARGET)/zos-build
+# tar that writes ustar; on Windows, TAR=/c/Windows/System32/tar.exe also works
+TAR ?= tar
 
 .PHONY: zos-sources
 zos-sources:
@@ -197,7 +199,7 @@ zos-sources:
 	if [ "$$c1" -lt 2 ] || [ "$$c2" -ne 1 ] || [ "$$c3" -ne 1 ] || [ "$$c4" -ne 6 ]; then \
 	  echo "zos-sources: a check failed - do not upload" >&2; exit 1; \
 	fi
-	cd $(TARGET) && COPYFILE_DISABLE=1 tar --format=ustar -cf zos-build.tar zos-build
+	cd $(TARGET) && COPYFILE_DISABLE=1 $(TAR) --format=ustar -cf zos-build.tar zos-build
 	@echo "Wrote $(ZOS_BUILD).tar (`wc -c < $(ZOS_BUILD).tar | tr -d " "` bytes). See zos/README.md for the z/OS steps."
 
 win32: $(SQLITE_UNPACKED) jni-header

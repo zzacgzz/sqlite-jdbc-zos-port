@@ -156,6 +156,7 @@ the commands without running them on another machine:
 | Hibernate startup stalls for minutes on z/OS | `hibernate.archive.scanner=org.hibernate.boot.archive.scan.internal.DisabledScanner` and `hibernate.archive.autodetection=none`, with entities listed explicitly. Heap size was not the cause |
 | `persistence.xml` fails to parse | XML comments must not contain `--`. Validate XML with a parser before committing |
 | The terminal shows `ñ` as boxes | Display only. Check the data with SQL `hex()` (`ñandú` is `C3B1616E64C3BA`) |
+| `make zos-sources` stops at tar with `Permission denied` (Windows) | Use the tar that ships with Windows: `make zos-sources TAR=/c/Windows/System32/tar.exe` |
 | Files under `/tmp` fail with `SQLITE_CANTOPEN` | The library was built without the symlink edit; `build.sh` warns about this. Rebuild from `make zos-sources` |
 
 Open question: a build was once seen failing because "a Maven plugin looks for a specific
