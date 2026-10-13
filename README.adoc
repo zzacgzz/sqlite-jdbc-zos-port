@@ -123,6 +123,8 @@ In the other OSs not listed above, the pure-java SQLite is used. (Applies to ver
 
 If you want to use the native library for your OS, link:./CONTRIBUTING.md[build the source from scratch].
 
+NOTE: This fork also supports IBM z/OS (USS, s390x, 64-bit). See link:zos/README.md[zos/README.md] for how the z/OS library is built and tested.
+
 === JARs
 
 Since version `3.53.0.0` multiple JARs are published with different classifiers:
