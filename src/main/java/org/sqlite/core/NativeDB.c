@@ -46,7 +46,7 @@ static jfieldID func_context = 0,
                 func_args = 0;
 static jmethodID fmethod = 0;
 
-static jclass  cclass = 0;
+static jclass  collationClass = 0;
 static jmethodID mth_compare = 0;
 
 static jclass  aclass = 0;
@@ -464,10 +464,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     func_args  = (*env)->GetFieldID(env, fclass, "args", "I");
     fmethod = (*env)->GetMethodID(env, fclass, "xFunc", "()V");
 
-    cclass = (*env)->FindClass(env, "org/sqlite/Collation");
-    if (!cclass) return JNI_ERR;
-    cclass = (*env)->NewWeakGlobalRef(env, cclass);
-    mth_compare = (*env)->GetMethodID(env, cclass, "xCompare", "(Ljava/lang/String;Ljava/lang/String;)I");
+    collationClass = (*env)->FindClass(env, "org/sqlite/Collation");
+    if (!collationClass) return JNI_ERR;
+    collationClass = (*env)->NewWeakGlobalRef(env, collationClass);
+    mth_compare = (*env)->GetMethodID(env, collationClass, "xCompare", "(Ljava/lang/String;Ljava/lang/String;)I");
 
     aclass = (*env)->FindClass(env, "org/sqlite/Function$Aggregate");
     if (!aclass) return JNI_ERR;
@@ -522,7 +522,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved) {
 
     if (fclass) (*env)->DeleteWeakGlobalRef(env, fclass);
 
-    if (cclass) (*env)->DeleteWeakGlobalRef(env, cclass);
+    if (collationClass) (*env)->DeleteWeakGlobalRef(env, collationClass);
 
     if (aclass) (*env)->DeleteWeakGlobalRef(env, aclass);
 
