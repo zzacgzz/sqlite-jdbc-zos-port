@@ -54,7 +54,7 @@ endif
 
 # os=Default is meant to be generic unix/linux
 
-known_targets := Linux-x86 Linux-x86_64 Linux-arm Linux-armv6 Linux-armv7 Linux-Android-arm Linux-Android-aarch64 Linux-Android-x86 Linux-Android-x86_64 Linux-ppc64 Linux-riscv64 Mac-x86 Mac-x86_64 Mac-aarch64 DragonFly-x86_64 FreeBSD-x86 FreeBSD-x86_64 FreeBSD-aarch64 OpenBSD-x86_64 Windows-x86 Windows-x86_64 Windows-armv7 Windows-aarch64 SunOS-sparcv9 HPUX-ia64_32
+known_targets := Linux-x86 Linux-x86_64 Linux-arm Linux-armv6 Linux-armv7 Linux-Android-arm Linux-Android-aarch64 Linux-Android-x86 Linux-Android-x86_64 Linux-ppc64 Linux-riscv64 Mac-x86 Mac-x86_64 Mac-aarch64 DragonFly-x86_64 FreeBSD-x86 FreeBSD-x86_64 FreeBSD-aarch64 OpenBSD-x86_64 Windows-x86 Windows-x86_64 Windows-armv7 Windows-aarch64 SunOS-sparcv9 HPUX-ia64_32 zOS-s390x
 target := $(OS_NAME)-$(OS_ARCH)
 
 ifeq (,$(findstring $(strip $(target)),$(known_targets)))
@@ -254,6 +254,22 @@ Windows-aarch64_CCFLAGS      := -D_JNI_IMPLEMENTATION_ -Ilib/inc_win -Os
 Windows-aarch64_LINKFLAGS    := -Wl,--kill-at -shared -static-libgcc
 Windows-aarch64_LIBNAME      := sqlitejdbc.dll
 Windows-aarch64_SQLITE_FLAGS :=
+
+# z/OS (USS) with IBM xlc. Experimental for "make native" on z/OS; the supported
+# route is "make zos-sources" plus zos/build.sh (see zos/README.md). Keep these
+# flags in sync with zos/build.sh. XLC_CFG names a custom xlc config (xlc -F).
+zOS-s390x_CC           := xlc $(if $(XLC_CFG),-F $(XLC_CFG))
+zOS-s390x_STRIP        := true
+zOS-s390x_CCFLAGS      := -q64 -qascii -qfloat=ieee -qlanglvl=extc99 -qdll -qexportall -O2 -D_ALL_SOURCE -D_XOPEN_SOURCE=600 -D_OPEN_SYS_FILE_EXT=1 -D_UNIX03_THREADS
+zOS-s390x_LINKFLAGS    := -q64 -Wl,dll
+zOS-s390x_LIBNAME      := libsqlitejdbc.so
+zOS-s390x_SQLITE_FLAGS := -DSQLITE_ASCII=1 -DSQLITE_BYTEORDER=4321
+ifeq ($(target),zOS-s390x)
+# UPDATE/DELETE LIMIT needs an amalgamation built from the full source tree
+ENABLE_UPDATE_DELETE_LIMIT ?= 0
+# no mmap for database I/O (overrides the shared default in Makefile)
+SQLITE_MAX_MMAP_SIZE ?= 0
+endif
 
 
 CC        := $($(target)_CC)
