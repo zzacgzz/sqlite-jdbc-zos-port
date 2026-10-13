@@ -12,7 +12,7 @@
 
     <properties>
       <property name="jakarta.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
-      <!-- jakarta.persistence.jdbc.url is set at run time by JpaSuite (uses --dir) -->
+      <!-- jakarta.persistence.jdbc.url is set at run time by JpaSuite from the dir option -->
       <property name="hibernate.dialect" value="org.hibernate.community.dialect.SQLiteDialect"/>
       <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
       <property name="hibernate.show_sql" value="false"/>
