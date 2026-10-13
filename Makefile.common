@@ -24,6 +24,12 @@ endif
 $(shell $(JAVAC) -cp $(JAVA_CLASSPATH) -sourcepath $(SRC) -d lib src/main/java/org/sqlite/util/OSInfo.java)
 endif
 
+# zos-sources only prepares z/OS sources: no need to detect the host
+ifeq ($(MAKECMDGOALS),zos-sources)
+OS_NAME ?= zOS
+OS_ARCH ?= s390x
+endif
+
 ifndef OS_NAME
 OS_NAME := $(shell $(JAVA) -cp lib:$(JAVA_CLASSPATH) $(OSINFO_CLASS) --os)
 endif
