@@ -104,6 +104,8 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 # limits defined here: https://www.sqlite.org/limits.html
 	perl -p -e "s/^(static const char \* const sqlite3azCompileOpt.+)$$/\1\n\n\/* This has been automatically added by sqlite-jdbc *\/\n  \"JDBC_EXTENSIONS\",/;" \
 	    $(SQLITE_OUT)/sqlite3.c.tmp > $(SQLITE_OUT)/sqlite3.c
+# z/OS: leave $SYSNAME-style symlinks to the kernel (inert unless __MVS__)
+	perl zos/zos-symlink-patch.pl $(SQLITE_OUT)/sqlite3.c
 	cat src/main/ext/*.c >> $(SQLITE_OUT)/sqlite3.c
 	$(CC) -o $@ -c $(CCFLAGS) \
 	    -DSQLITE_ENABLE_LOAD_EXTENSION=1 \
